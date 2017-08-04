@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ChatRoom</string>
+    <string name="robot_welcome">hi, i am a robot, you can chat with me! any questions? plz send \"help\".</string>
+</resources>
