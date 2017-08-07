@@ -3,6 +3,8 @@ package uq.edu.au.chatroom.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.daimajia.swipe.SwipeLayout;
+
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import uq.edu.au.chatroom.R;
 import uq.edu.au.chatroom.bean.ChatInfo;
 import uq.edu.au.chatroom.other.Utils;
@@ -29,6 +32,7 @@ public class ChatList extends RecyclerView {
 
     private ChatListAdapter mRobotAdapter;
     private ChatListAdapter mChatRoomAdapter;
+    private OnVote mOnVote;
 
     public ChatList(Context context) {
         super(context);
@@ -102,11 +106,15 @@ public class ChatList extends RecyclerView {
         return chartInfo;
     }
 
+    public void setOnVote(OnVote onVote) {
+        mOnVote = onVote;
+    }
+
     public short getMode() {
         return mMode;
     }
 
-    private static class ChatListAdapter extends RecyclerView.Adapter<ChatItemHolder> {
+    private class ChatListAdapter extends RecyclerView.Adapter<ChatItemHolder> {
 
         private static final short TYPE_MINE = 0;
         private static final short TYPE_OTHER = 1;
@@ -127,11 +135,38 @@ public class ChatList extends RecyclerView {
         }
 
         @Override
-        public void onBindViewHolder(ChatItemHolder holder, int position) {
-            ChatInfo chartInfo = mChartInfos.get(holder.getAdapterPosition());
+        public void onBindViewHolder(final ChatItemHolder holder, int position) {
+            final ChatInfo chartInfo = mChartInfos.get(holder.getAdapterPosition());
             holder.nick.setText(chartInfo.getNick());
             holder.content.setText(chartInfo.getContent());
             holder.time.setText(Utils.parseTime(chartInfo.getTime()));
+
+            if (TYPE_OTHER == getItemViewType(position)) {
+                OnClickListener onClickListener = new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (null == mOnVote) {
+                            return;
+                        }
+
+                        switch (v.getId()) {
+                            case R.id.add_vote:
+                                mOnVote.onAddVote(chartInfo.getmAnswerId());
+                                break;
+                            case R.id.del_vote:
+                                mOnVote.onDelVote(chartInfo.getmAnswerId());
+                                break;
+                            default:
+                                break;
+                        }
+
+                        ((SwipeLayout) holder.itemView.findViewById(R.id.swipe)).close();
+                        Toast.makeText(getContext(), "ok, i got your idea!", Toast.LENGTH_LONG).show();
+                    }
+                };
+                holder.itemView.findViewById(R.id.add_vote).setOnClickListener(onClickListener);
+                holder.itemView.findViewById(R.id.del_vote).setOnClickListener(onClickListener);
+            }
         }
 
         @Override
@@ -169,5 +204,10 @@ public class ChatList extends RecyclerView {
             content = (TextView) itemView.findViewById(R.id.content);
             time = (TextView) itemView.findViewById(R.id.time);
         }
+    }
+
+    public interface OnVote {
+        void onAddVote(String answerId);
+        void onDelVote(String answerId);
     }
 }

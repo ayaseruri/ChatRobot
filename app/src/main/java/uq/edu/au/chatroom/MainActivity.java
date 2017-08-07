@@ -30,13 +30,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         if (BuildConfig.DEBUG) {
-            mIp = "172.18.36.242";
+            mIp = "172.18.37.155";
             setSocket();
         } else {
             setSocket();
         }
 
         mChatList = (ChatList) findViewById(R.id.chat_list);
+        mChatList.setOnVote(new ChatList.OnVote() {
+            ChatInfo chatInfo = new ChatInfo();
+            @Override
+            public void onAddVote(String answerId) {
+                chatInfo.setAnswerId(answerId);
+                chatInfo.setAdd(true);
+                mNetSocket.send(chatInfo);
+            }
+
+            @Override
+            public void onDelVote(String answerId) {
+                chatInfo.setAnswerId(answerId);
+                chatInfo.setDel(true);
+                mNetSocket.send(chatInfo);
+            }
+        });
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -66,8 +82,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ChatInfo chatInfo = new ChatInfo();
             chatInfo.setNick("Me");
             chatInfo.setContent(sendText);
-            chatInfo.setTime(System.currentTimeMillis());
             chatInfo.setMine(true);
+            chatInfo.setTime(System.currentTimeMillis());
             chatInfo.setChatRoom(mChatList.getMode() == ChatList.MODE_CHAT_ROOM);
             mNetSocket.send(chatInfo);
         }
@@ -79,13 +95,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mEditText.setText("");
         }
 
-        mChatList.addChatInfo(chatInfo);
+        if (!TextUtils.isEmpty(chatInfo.getContent())) {
+            mChatList.addChatInfo(chatInfo);
+        }
         mChatList.scrollToNow();
     }
 
     @Override
     public void onReciveSuc(ChatInfo chatInfo) {
-        mChatList.addChatInfo(chatInfo);
+        if (!TextUtils.isEmpty(chatInfo.getContent())) {
+            mChatList.addChatInfo(chatInfo);
+        }
         mChatList.scrollToNow();
     }
 
