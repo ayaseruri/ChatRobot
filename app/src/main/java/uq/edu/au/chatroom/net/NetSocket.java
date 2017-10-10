@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import android.accounts.NetworkErrorException;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -87,6 +88,11 @@ public class NetSocket implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
             sendMeg(ERROR, e);
+        }
+
+        if (null == mBufferedReader) {
+            sendMeg(ERROR, new NetworkErrorException());
+            return;
         }
 
         try {

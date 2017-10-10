@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">ChatRoom</string>
     <string name="robot_welcome">hi, i am a robot, you can chat with me! any questions? plz send \"help\".</string>
+
+    <string-array name="nicks">
+        <item>jack</item>
+        <item>tom</item>
+        <item>alice</item>
+        <item>wang</item>
+        <item>li</item>
+        <item>zhou</item>
+    </string-array>
 </resources>

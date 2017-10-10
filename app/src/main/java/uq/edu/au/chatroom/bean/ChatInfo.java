@@ -72,6 +72,7 @@ public class ChatInfo {
 
     public void setDel(boolean del) {
         isDel = del;
+        isAdd = !del;
     }
 
     public boolean isAdd() {
@@ -80,6 +81,7 @@ public class ChatInfo {
 
     public void setAdd(boolean add) {
         isAdd = add;
+        isDel = !add;
     }
 
     public long getTime() {

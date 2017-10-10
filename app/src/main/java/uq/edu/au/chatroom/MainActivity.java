@@ -1,10 +1,13 @@
 package uq.edu.au.chatroom;
 
+import java.util.Random;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,29 +15,31 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 import uq.edu.au.chatroom.bean.ChatInfo;
 import uq.edu.au.chatroom.net.NetSocket;
 import uq.edu.au.chatroom.ui.ChatList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, NetSocket.OnMessage {
 
-    private String mIp;
+    private String mIp = "";
     private EditText mEditText;
     private NetSocket mNetSocket;
     private ChatList mChatList;
+    private Thread mNetThread;
+    private String mNicks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        String[] nicks = getResources().getStringArray(R.array.nicks);
+        mNicks = nicks[new Random().nextInt(nicks.length)];
         if (BuildConfig.DEBUG) {
-            mIp = "172.18.37.155";
-            setSocket();
-        } else {
-            setSocket();
+            mIp = "172.18.37.64";
+//            setIp();
         }
+
+        setSocket();
 
         mChatList = (ChatList) findViewById(R.id.chat_list);
         mChatList.setOnVote(new ChatList.OnVote() {
@@ -80,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String sendText = mEditText.getText().toString();
         if (!TextUtils.isEmpty(sendText) && null != mNetSocket) {
             ChatInfo chatInfo = new ChatInfo();
-            chatInfo.setNick("Me");
+            chatInfo.setNick(mChatList.getMode() == ChatList.MODE_CHAT_ROOM ? mNicks : "Me");
             chatInfo.setContent(sendText);
             chatInfo.setMine(true);
             chatInfo.setTime(System.currentTimeMillis());
@@ -111,11 +116,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onError(Exception e) {
-        Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        Snackbar.make(findViewById(R.id.bottom_nav), e.getMessage(), Snackbar.LENGTH_INDEFINITE)
+                .setAction("reconnect", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        setIp();
+                    }
+                }).show();
     }
 
     private void setIp() {
         final View contentView = LayoutInflater.from(this).inflate(R.layout.view_ip_set_dialog, null);
+        final EditText ipEditText = ((EditText) contentView.findViewById(R.id.edit));
+        ipEditText.setText(mIp);
         new AlertDialog.Builder(this)
                 .setTitle("Please input ip:")
                 .setCancelable(false)
@@ -123,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setPositiveButton("go", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mIp = ((EditText) contentView.findViewById(R.id.edit)).getText().toString();
+                        mIp = ipEditText.getText().toString();
                         setSocket();
                     }
                 }).show();
@@ -131,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setSocket() {
         mNetSocket = new NetSocket(mIp, 10012, MainActivity.this);
-        new Thread(mNetSocket).start();
+        mNetThread = new Thread(mNetSocket);
+        mNetThread.start();
     }
 }
